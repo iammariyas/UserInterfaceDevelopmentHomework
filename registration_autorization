@@ -1,0 +1,123 @@
+import os
+import hashlib
+
+
+def init_file():  # Создание файла
+    if not os.path.exists('users.txt'):
+        with open('users.txt', 'w'):
+            pass
+
+
+def add_user(login: str, password: str):  # Добавление пользователя в файл
+    with open('users.txt', 'r') as f:
+        users = f.read().splitlines()
+    for user in users:
+        args = user.split(':')
+        if login == args[0]:
+            return False
+    with open('users.txt', 'a') as f:
+        f.write(f'{login}:{password}')
+    return True
+
+
+def get_user(login: str, password: str):  # Проверка существования логина
+    with open('users.txt', 'r') as f:
+        users = f.read().splitlines()
+    for user in users:
+        args = user.split(':')
+        if login == args[0] and password == args[1]:
+            return True
+    return False
+
+
+init_file()
+
+while True:
+    print('''Что вы хотите сделать?
+        1. Регистрация
+        2. Вход
+        3. Добавить информацию о себе
+        4. Выход''')
+    ans = int(input())
+    if ans == 1:
+
+        while len(login := input('Введите логин не менее 5 символов: ')) < 5:
+            print()
+
+        print('''Введите пароль не менее 8 символов, содержит хотя бы одну заглавную, строчную букву,
+содержит хотя бы одну цифру и один специальный символ: ''')
+        password = input()
+        upper, lower, digit, symbol = 0, 0, 0, 0
+        fl = False
+        while not fl:
+            for i in password:
+                if i.isupper():
+                    upper += 1
+                if i.islower():
+                    lower += 1
+                if i.isdigit():
+                    digit += 1
+                if i in '!@#$%^&*()-_=+[]{};:/?.><,`':
+                    symbol += 1
+
+            if len(password) >= 8 and upper > 0 and lower > 0 and digit > 0 and symbol > 0:
+                fl = True
+            else:
+                print('Введите корректный пароль:')
+                password = input()
+
+        print('Повторите пароль:')
+        password_repeat = input()
+        while password != password_repeat:
+            print('Повтор пароля обязан совпадать с паролем')
+            password_repeat = input()
+
+        print('Введите адрес электронной почты:')
+        email = ''
+        address = input()
+        while email == '':
+            if address.count('@') == 1 and address[0] != '@' and address[-1] != '@':
+                email = address
+            else:
+                print('Введите корректный адрес электронной почты:')
+                address = input()
+
+        print('Введите номер телефона')
+        number = input()
+        while not ((number[0:2] == '+7' and len(number) == 12) or (number[0] == '8' and len(number) == 11)):
+            print('Введите корректный номер телефона')
+            number = input()
+
+        result = add_user(login, hashlib.sha256(password.encode()).hexdigest())
+        if not result:
+            print('Пользователь с таким логином уже существует!')
+        else:
+            print('Регистрация прошла успешно')
+
+    elif ans == 2:
+        login = input('Введите логин: ')
+        password = input('Введите пароль: ')
+        result = get_user(login, hashlib.sha256(password.encode()).hexdigest())
+
+        if result:
+            print('Авторизация прошла успешно.')
+            print(f'Привет, {login}!')
+            break
+        else:
+            print('Неверный логин или пароль. Повторите попытку.')
+            login = input('Введите логин: ')
+            password = input('Введите пароль: ')
+
+    elif ans == 3:
+        print('Добавьте информацию о себе?')
+        name = input('Введите ФИО: ')
+        city = input('Введите город: ')
+        about = input('Расскажите о себе: ')
+        if name == '' or city == '' or about == '':
+            print('Ошибка. Повторите ввод')
+        with open('users.txt', 'w') as f:
+            f.write(f'{name}:{city}:{about}')
+
+    elif ans == 4:
+        print('Завершение работы')
+        break
