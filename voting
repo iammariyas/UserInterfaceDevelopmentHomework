@@ -1,0 +1,56 @@
+import sys
+import json
+from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6 import uic
+
+
+class MyWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('decision_making.ui', self)
+        self.votes = {}
+        self.load_data()
+        self.btn_for.clicked.connect(lambda: self.add_vote('ЗА'))
+        self.btn_against.clicked.connect(lambda: self.add_vote('ПРОТИВ'))
+        self.update()
+
+    def load_data(self):
+        """Загрузка json файла"""
+        try:
+            with open('votes.json', 'r', encoding='utf-8') as f:
+                self.votes = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+    def save_data(self):
+        """Запись в json файл новой информации"""
+        with open('votes.json', 'w', encoding='utf-8') as f:
+            json.dump(self.votes, f, ensure_ascii=False, indent=2)
+
+    def add_vote(self, vote):
+        """Выбор за что голосовать"""
+        question = self.choice_question.currentText()
+        if question == 'Выберите вопрос':
+            return
+        elif question not in self.votes:
+            self.votes[question] = []
+        self.votes[question].append(vote)
+        self.save_data()
+        self.update()
+
+    def update(self):
+        """Запись в список и обновление счетчика lcdnumber"""
+        self.list_widget.clear()
+        counter_votes = 0
+        for question, votes in self.votes.items():
+            self.list_widget.addItem(f'{question}:')
+            for v in votes:
+                self.list_widget.addItem(f' - {v}')
+            counter_votes += len(votes)
+        self.lcdNumber.display(counter_votes)
+
+
+app = QApplication(sys.argv)
+window = MyWindow()
+window.show()
+sys.exit(app.exec())
